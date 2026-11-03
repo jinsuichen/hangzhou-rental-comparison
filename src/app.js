@@ -14,7 +14,28 @@ const esc=s=>String(s??'不详').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;',
 function line(k,v){return `<div class="line"><span class="key">${esc(k)}</span><span class="${String(v??'不详').startsWith('不详')?'unknown':''}">${esc(v)}</span></div>`}
 function details(title,keys,h){return `<details class="cell-details"><summary>${esc(title)}</summary>${keys.map(k=>line(k,h[k])).join('')}</details>`}
 function filtered(){const q=$('search').value.toLowerCase();return houses.filter(h=>(!$('hideOff').checked||!h.状态.includes('已下架'))&&(!$('hideExcluded').checked||!excluded.has(h.编号))&&(!$('onlyNew').checked||h.编号.startsWith('N'))&&Object.entries(h).some(([k,v])=>k!=='image'&&String(v).toLowerCase().includes(q)))}
-function travel(name,dest){const r=routes.find(r=>r.小区名称===name&&r.目的地===dest);if(!r)return '<span class="unknown">不详</span>';let html='<div class="travel-grid">';for(const m of ['打车','地铁','自行车','步行']){const p=r.方式[m]||{},min=p.时间秒==null?'不详':(p.时间秒/60).toFixed(1)+'分钟',km=p.距离米==null?'距离不详':(p.距离米/1000).toFixed(3)+' km';html+=`<div class="travel"><span class="mode">${m==='自行车'?'骑行':m}</span><div><b>${min}</b><small>${km}</small></div></div>`}const metro=r.方式.地铁||{};return html+'</div>'+`<details class="cell-details"><summary>路线与定位依据</summary>${line('地铁',metro.路线||metro.备注||'不详')}${line('接驳步行',metro.步行接驳米==null?'不详':metro.步行接驳米+'m')}${line('小区起点',r.起点坐标)}${line('目的地',r.终点坐标)}</details>`}
+function travel(name, dest) {
+  const r = routes.find(r => r.小区名称 === name && r.目的地 === dest);
+  if (!r) return '<span class="unknown">不详</span>';
+  const metro = r.方式.地铁 || {};
+  const bus = r.方式.公交参考;
+  let html = '<div class="travel-grid">';
+  for (const m of ['打车', '地铁', '自行车', '步行']) {
+    const p = r.方式[m] || {};
+    const noMetro = m === '地铁' && p.状态 === '高德未返回地铁方案';
+    const min = noMetro ? '未返回方案' : p.时间秒 == null ? '不详' : (p.时间秒 / 60).toFixed(1) + '分钟';
+    const km = noMetro ? '地铁距离、时间不详' : p.距离米 == null ? '距离不详' : (p.距离米 / 1000).toFixed(3) + ' km';
+    html += `<div class="travel"><span class="mode">${m === '自行车' ? '骑行' : m}</span><div><b>${min}</b><small>${km}</small></div></div>`;
+  }
+  html += '</div>';
+  if (bus) {
+    html += `<div class="bus-reference"><span class="badge">公交参考${bus.含高峰线路 ? ' · 含高峰线路' : ''}</span><strong>${(bus.时间秒 / 60).toFixed(1)}分钟 · ${(bus.距离米 / 1000).toFixed(3)} km</strong><small>含接驳步行 ${(bus.步行接驳米 / 1000).toFixed(3)} km · 非地铁方案</small><small>高德复查 ${esc(bus.复查日期)}</small></div>`;
+  }
+  html += `<details class="cell-details"><summary>路线与定位依据</summary>${line('地铁', metro.路线 || metro.备注 || '不详')}`;
+  if (bus) html += line('公交路线', bus.路线) + line('公交说明', bus.备注) + line('公交距离依据', bus.距离依据);
+  if (metro.步行接驳米 != null) html += line('地铁接驳步行', metro.步行接驳米 + 'm');
+  return html + line('小区起点', r.起点坐标) + line('目的地', r.终点坐标) + '</details>';
+}
 function houseTable(list){return `<div class="table-wrap"><table class="house-table"><thead><tr><th>房源 / 实景</th><th>户型与楼层</th><th>租金与费用</th><th>居住与设施</th><th>备注与更多信息</th></tr></thead><tbody>`+list.map(h=>`<tr class="${excluded.has(h.编号)?'excluded':''}"><td class="picture"><span class="house-id">${esc(h.编号)}</span><span class="source">${h.编号.startsWith('N')?'官网新增':'原群聊房源'}</span><label class="exclude"><input type="checkbox" data-exclude="${esc(h.编号)}" aria-label="排除${esc(h.编号)}" ${excluded.has(h.编号)?'checked':''}>排除这套</label><button class="photo-btn" data-photo="${esc(h.编号)}" aria-label="查看${esc(h.编号)}实景图"><img class="thumb" src="${h.image}" alt="${esc(h.编号)}原始截图" loading="lazy"></button>${h.官网链接?`<a class="source" href="${esc(h.官网链接)}" target="_blank" rel="noopener">查看官网详情 ↗</a>`:''}<span class="badge ${h.状态.includes('已下架')?'bad':''}">${h.状态.includes('已下架')?'已下架 / 成交':'采集时可打开'}</span></td><td><strong>${esc(h.户型)}</strong><div class="note">${esc(h.厨卫)} · ${esc(h.出租方式)}</div>${line('面积',h['群卡或海报面积㎡']+'㎡')}${line('朝向',h.朝向)}${line('楼层',h.楼层)}${line('电梯',h.电梯)}${details('面积与楼层细节',['详情面积㎡','具体楼层'],h)}</td><td><div class="price">${esc(h.月租元)}<small> 元/月</small></div>${line('付款',h.付款方式)}${line('押金',h.押金元)}${line('物业',h.物业费)}${line('服务费',h.服务费)}${line('中介费',h.中介费)}${details('历史价格与其他费用',['群卡或海报月租元','其他固定费用'],h)}</td><td>${line('入住',h.入住时间)}${line('租期',h.租期)}${line('宠物',h.允许养宠物)}${line('外卖上楼',h.外卖能否送上楼)}${line('浴霸',h.浴霸)}<div class="house-note">${esc(h.配套设施)}</div>${details('水电、采暖及看房',['水电类型','采暖','看房','燃气','网络','未配备设施'],h)}</td><td><div class="house-note">${esc(h.备注)}</div>${details('其他条件',['装修标准','退租转租条款','噪声隔音','采光','房源详细地址与楼栋'],h)}${details('来源与图片说明',['小程序来源','官网房源编号','图片说明','状态'],h)}</td></tr>`).join('')+'</tbody></table></div>'}
 function render(){const list=filtered(),shown=names.filter(n=>list.some(h=>h.小区名称===n));$('communityCount').textContent=names.length;$('houseCount').textContent=houses.length;$('newCount').textContent=houses.filter(h=>h.编号.startsWith('N')).length;$('count').textContent=`${shown.length}个小区 · ${list.length}/${houses.length}套 · 已排除${excluded.size}套`;
 $('communityPanel').hidden=mode!=='community';$('housePanel').hidden=mode!=='houses';$('communityTab').classList.toggle('active',mode==='community');$('houseTab').classList.toggle('active',mode==='houses');$('viewHelp').textContent=mode==='community'?'每个小区一行，通勤只在这里展示。点“查看房源”进入该小区，比较具体房子的价格与条件。':'房源按小区聚合，通勤请切换到“小区维度”。排除标记针对具体房源，可随时取消。';
