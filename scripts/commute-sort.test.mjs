@@ -21,8 +21,8 @@ test('all four modes sort correctly for each office, without changing source dat
     for (const mode of ['打车', '地铁', '自行车', '步行']) {
       for (const direction of ['asc', 'desc']) {
         const sorted = sortCommunities(names, data.通勤, { destination, mode, direction });
-        assert.equal(sorted.length, 20);
-        assert.equal(new Set(sorted).size, 20);
+        assert.equal(sorted.length, names.length);
+        assert.equal(new Set(sorted).size, names.length);
         const seconds = sorted.map(name => data.通勤.find(r => r.小区名称 === name && r.目的地 === destination)?.方式?.[mode]?.时间秒);
         let missing = false;
         let last;
