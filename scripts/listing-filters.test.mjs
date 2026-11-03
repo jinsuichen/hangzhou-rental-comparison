@@ -24,3 +24,13 @@ test('both offices and all four modes enforce minute limits; unknown/unrecommend
   }
   assert.equal(matchesFilters(house,[],{ailiMode:'地铁',ailiMax:''}),true);
 });
+test('OR combines only enabled commute conditions and never bypasses housing conditions',()=>{
+  const f={commuteLogic:'or',ailiMode:'打车',ailiMax:'5',aliMode:'自行车',aliMax:'20'};
+  assert.equal(matchesFilters(house,routes,f),true);
+  assert.equal(matchesFilters(house,routes,{...f,commuteLogic:'and'}),false);
+  assert.equal(matchesFilters(house,routes,{...f,rentMax:'4000'}),false);
+  assert.equal(matchesFilters(house,routes,{...f,aliMax:''}),false);
+  assert.equal(matchesFilters(house,routes,{...f,ailiMax:'',aliMax:''}),true);
+  assert.equal(matchesFilters(house,[],f),false);
+  assert.equal(matchesFilters(house,routes.slice(1),f),true);
+});
