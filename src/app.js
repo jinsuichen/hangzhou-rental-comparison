@@ -22,8 +22,8 @@ function travel(name, dest) {
   let html = '<div class="travel-grid">';
   for (const m of ['打车', '地铁', '自行车', '步行']) {
     const p = r.方式[m] || {};
-    const noMetro = m === '地铁' && p.状态 === '高德未返回地铁方案';
-    const min = noMetro ? '未返回方案' : p.时间秒 == null ? '不详' : (p.时间秒 / 60).toFixed(1) + '分钟';
+    const noMetro = m === '地铁' && p.状态 === '综合规划未推荐地铁';
+    const min = noMetro ? '不推荐' : p.时间秒 == null ? '不详' : (p.时间秒 / 60).toFixed(1) + '分钟';
     const km = noMetro ? '地铁距离、时间不详' : p.距离米 == null ? '距离不详' : (p.距离米 / 1000).toFixed(3) + ' km';
     html += `<div class="travel"><span class="mode">${m === '自行车' ? '骑行' : m}</span><div><b>${min}</b><small>${km}</small></div></div>`;
   }
