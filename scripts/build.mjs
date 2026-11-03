@@ -17,7 +17,7 @@ const dist = resolve(root, 'dist');
 await rm(dist, { recursive: true, force: true });
 await mkdir(dist, { recursive: true });
 await cp(resolve(root, 'public'), dist, { recursive: true });
-for (const file of ['index.html', 'styles.css', 'app.js', 'commute-sort.js', 'listing-filters.js']) {
+for (const file of ['index.html', 'styles.css', 'app.js', 'commute-sort.js', 'listing-filters.js', 'commute-builder.js']) {
   await cp(resolve(root, 'src', file), resolve(dist, file));
 }
 console.log(`Built ${ids.size} listings across ${new Set(data.房源.map(h => h.小区名称)).size} communities.`);

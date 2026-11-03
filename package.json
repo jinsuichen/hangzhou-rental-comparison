@@ -6,7 +6,7 @@
   "description": "Community and listing comparison for Hangzhou rentals",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "check": "node --check src/app.js && node --test scripts/*.test.mjs && node scripts/build.mjs"
+    "check": "node --check src/app.js && node --check src/commute-builder.js && node --test scripts/*.test.mjs && node scripts/build.mjs"
   },
   "engines": { "node": ">=22" }
 }
